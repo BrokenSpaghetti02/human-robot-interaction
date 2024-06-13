@@ -259,7 +259,6 @@ def main():
         # Reset the stream for the next iteration
         stream.stop_stream()
         stream.close()
-        stream = open_stream(RATE = RATE, CHUNK = CHUNK, p = p)
 
 if __name__ == '__main__':
     main()   
