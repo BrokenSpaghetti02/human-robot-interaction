@@ -217,6 +217,11 @@ def main():
         # Save the updated history
         save_history(history_file_path, history)
 
+        def remove_special_chars(text):
+            return text.replace('#', '').replace('*', '')
+        
+        result = remove_special_chars(result)
+
         # Set the text to be synthesized
         text_to_speak = result
 
