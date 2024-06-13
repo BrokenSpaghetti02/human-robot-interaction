@@ -183,16 +183,19 @@ def main():
         print(f"Mini Pupper has stopped listening.\n")
         print(f"User input: {user_input}\n")
 
-        # while user_input == "":
-        #     speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
+        while user_input == "":
+            speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
 
-        #     while speak == 'n':
-        #         speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
+            while speak == 'n':
+                speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
 
-        #     print("Mini Pupper 2 is listening...\n")
-        #     user_input = detect_speech_and_transcribe(stream=stream, RATE = RATE, CHUNK = CHUNK, speech_client = speech_client)
-        #     print(f"Mini Pupper has stopped listening.\n")
-        #     print(f"User input: {user_input}\n")
+            stream.stop_stream()
+            stream.close()
+            print("Mini Pupper 2 is listening...\n")
+            stream = open_stream(RATE = RATE, CHUNK = CHUNK, p = p)
+            user_input = detect_speech_and_transcribe(stream = stream, RATE = RATE, CHUNK = CHUNK, speech_client = speech_client)
+            print(f"Mini Pupper has stopped listening.\n")
+            print(f"User input: {user_input}\n")
 
 #------------------------------------------------- Chat with Gemini Pro -------------------------------------------------
 
