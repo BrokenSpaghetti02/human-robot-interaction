@@ -82,11 +82,18 @@ def open_stream(RATE, CHUNK, p):
     )
 
 def audio_generator(stream, chunk):
-    while True:
-        data = stream.read(chunk)
-        if not data:
-            break
-        yield data
+    try:
+        while True:
+            data = stream.read(chunk)
+            if not data:
+                # End of stream, break out of the loop
+                break
+            yield data
+    except Exception as e:
+        # Handle any exceptions that may occur while reading from the stream
+        print(f"Error reading from audio stream: {e}")
+        # You may want to close the stream or return a signal to indicate an error
+        yield None
 
 # Function to detect voice and transribe speech
 def detect_speech_and_transcribe(stream, RATE, CHUNK, speech_client):
@@ -94,14 +101,14 @@ def detect_speech_and_transcribe(stream, RATE, CHUNK, speech_client):
     streaming_config = speech.StreamingRecognitionConfig(
         config=speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=RATE,
-            language_code="en-US",
-            use_enhanced=True,
+            sample_rate_hertz = RATE,
+            language_code = "en-US",
+            use_enhanced = True,
             model="phone_call",
         ),
         interim_results=True
     )
-    responses = speech_client.streaming_recognize(config=streaming_config, requests=requests)
+    responses = speech_client.streaming_recognize(config = streaming_config, requests = requests)
 
     user_input = ""
     for response in responses:
@@ -166,43 +173,39 @@ def main():
 
     time.sleep(0.5)
 
-    stream = open_stream(RATE = RATE, CHUNK = CHUNK, p = p)
-
     while True:
 
 #------------------------------------------------- Speech to Text -------------------------------------------------
 
         print("Mini Pupper 2 is listening...\n")
-        user_input = detect_speech_and_transcribe(stream=stream, RATE = RATE, CHUNK = CHUNK, speech_client = speech_client)
+        stream = open_stream(RATE = RATE, CHUNK = CHUNK, p = p)
+        user_input = detect_speech_and_transcribe(stream = stream, RATE = RATE, CHUNK = CHUNK, speech_client = speech_client)
         print(f"Mini Pupper has stopped listening.\n")
         print(f"User input: {user_input}\n")
 
-        while user_input == "":
-            speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
+        # while user_input == "":
+        #     speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
 
-            while speak == 'n':
-                speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
+        #     while speak == 'n':
+        #         speak = str(input("No user input. Speak to Mini Pupper? (y/n)\n"))
 
-            print("Mini Pupper 2 is listening...\n")
-            user_input = detect_speech_and_transcribe(stream=stream, RATE = RATE, CHUNK = CHUNK, speech_client = speech_client)
-            print(f"Mini Pupper has stopped listening.\n")
-            print(f"User input: {user_input}\n")
+        #     print("Mini Pupper 2 is listening...\n")
+        #     user_input = detect_speech_and_transcribe(stream=stream, RATE = RATE, CHUNK = CHUNK, speech_client = speech_client)
+        #     print(f"Mini Pupper has stopped listening.\n")
+        #     print(f"User input: {user_input}\n")
 
 #------------------------------------------------- Chat with Gemini Pro -------------------------------------------------
 
         # Fetch response from Gemini Pro
-        # Add the suffix to user input
-        user_input_with_suffix = user_input + " In short. NO asterisks, NO hashtags, or emojis. NO asterisks, NO hashtags, or emojis. "
-
         start_time = time.time()
-        result = conversation.invoke(input=user_input_with_suffix + "In short. No asterisks, hashtags, or emojis.")['response']
+        result = conversation.invoke(input=user_input)['response']
         end_time = time.time()
         print(f"Gemini response time: {end_time - start_time:.2f} seconds\n")
 
         print(f"Mini Pupper: {result}\n")
 
         # Update and save conversation history
-        memory.chat_memory.add_user_message(user_input_with_suffix)
+        memory.chat_memory.add_user_message(user_input)
         memory.chat_memory.add_ai_message(result)
 
         # Generate the history to be saved
@@ -257,12 +260,6 @@ def main():
         stream.stop_stream()
         stream.close()
         stream = open_stream(RATE = RATE, CHUNK = CHUNK, p = p)
-    
-    # 关闭音频流
-    if stream.is_active():
-        stream.stop_stream()
-    stream.close()
-    p.terminate()
 
 if __name__ == '__main__':
     main()   
