@@ -1,0 +1,10 @@
+json
+google-auth
+langchain-core
+langchain-google-vertexai
+sounddevice
+soundfile
+google-cloud-texttospeech
+langchain
+google-cloud-speech
+pyaudio
