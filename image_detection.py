@@ -1,12 +1,11 @@
-# I am playing rock paper scissors. Tell me what is this symbol?
 import cv2
 import os
-import time
 from langchain_google_vertexai import ChatVertexAI
 import google.auth
 from vertexai.preview.generative_models import Image
 from langchain_core.messages import HumanMessage, SystemMessage
 import base64
+from google.cloud import texttospeech
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/ubuntu/mini_pupper_bsp/demos/super_key.json"
 
@@ -17,37 +16,44 @@ model = ChatVertexAI(model="gemini-pro-vision")
 def capture_image(output_path):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    # turn on the camera
-    cap = cv2.VideoCapture(0)  # 0 represents the "first" camera
+    cap = cv2.VideoCapture(0) 
     if not cap.isOpened():
         print("Camera error! Cannot turn on the camera.")
         return
 
-    # read one frame
     ret, frame = cap.read()
 
     if ret:
-        # save the image
+        # 保存图像
         cv2.imwrite(output_path, frame)
         print(f"The image was saved to {output_path}")
     else:
         print("Cannot capture the image")
 
-    # release the camera
     cap.release()
 
+def text_to_speech(text, output_audio_path):
+    client = texttospeech.TextToSpeechClient()
+    synthesis_input = texttospeech.SynthesisInput(text=text)
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-GB",
+        name="en-GB-Wavenet-F"
+    )
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+    response = client.synthesize_speech(
+        input=synthesis_input,
+        voice=voice,
+        audio_config=audio_config
+    )
+    with open(output_audio_path, "wb") as out:
+        out.write(response.audio_content)
+    print(f"Audio content written to file '{output_audio_path}'")
+
 if __name__ == "__main__":
-    # Measure total time
-    start_time_total = time.time()
-
     output_path = "/home/ubuntu/mini_pupper_bsp/demos/images/captured_image.jpg"
-
-    # Measure time for capturing the image
-    start_time_capture = time.time()
     capture_image(output_path)
-    end_time_capture = time.time()
-    capture_duration = end_time_capture - start_time_capture
-    print(f"Time taken to capture and save the image: {capture_duration:.2f} seconds")
 
     with open(output_path, "rb") as image_file:
         image_bytes = image_file.read()
@@ -60,22 +66,23 @@ if __name__ == "__main__":
     }
     text_message = {
         "type": "text",
-        "text": "I am playing rock paper scissors. Tell me what is this symbol? Only in one word.",
+        "text": "Who is that? Name only.",
     }
 
-    # Prepare input for model consumption
+    # 准备模型输入
     message = HumanMessage(content=[text_message, image_message])
 
-    # Measure time for model invocation
-    start_time_model = time.time()
+    # 调用模型
     output = model.invoke([message])
-    end_time_model = time.time()
-    model_duration = end_time_model - start_time_model
-    print(f"Time taken for model invocation and response: {model_duration:.2f} seconds")
+    print(output.content)
 
-    print("Model response:", output.content)
+    # 生成并播放语音
+    result_text = f"The person in the image is {output.content.strip()}."
+    print(result_text)
 
-    # Measure total time
-    end_time_total = time.time()
-    total_duration = end_time_total - start_time_total
-    print(f"Total time taken: {total_duration:.2f} seconds")
+    # 将结果转换为语音
+    output_audio_path = "/home/ubuntu/mini_pupper_bsp/demos/result.mp3"
+    text_to_speech(result_text, output_audio_path)
+
+    # 播放音频文件
+    os.system(f"mpg321 {output_audio_path}")
