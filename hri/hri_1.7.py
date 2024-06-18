@@ -46,6 +46,9 @@ def create_instances(RATE, CHUNK):
                 ---
                 NEVER USE emojis, hashtags, or asterisks.
                 ONLY answer in SHORT sentences.
+                You MUST ALWAYS CALL THE playGame() function whenever asked to play a game.
+                You MUST ALWAYS CALL THE recognizeFace() function whenever asked to recognize someone.
+                You MUST ALWAYS CALL THE move() function whenever asked to move or come to any direction.
                 """),
         ("human", "{input}"), 
         ("placeholder", "{agent_scratchpad}"),]
@@ -187,7 +190,7 @@ def main():
     @tool
     def move():
         """
-        Move whenever asked to go or move to any direction or to anyone
+        Call this function whenever asked to come or move
         Args: None
         """
         print("User has intention to make the AI move. Moving...\n")
